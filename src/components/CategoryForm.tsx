@@ -45,8 +45,9 @@ export default function CategoryForm({ categoryId }: { categoryId?: string }) {
   const [directLinkUrl, setDirectLinkUrl] = useState("")
   const [directLinkType, setDirectLinkType] = useState<"image" | "video">("image")
   
-  // QR Note state
+  // QR Styling state
   const [qrNote, setQrNote] = useState("cotton dekhne ke liye muje scan karo.")
+  const [qrColor, setQrColor] = useState("#1e1e2f")
   
   // Category stats (Advanced Analytics)
   const [views, setViews] = useState(0)
@@ -67,6 +68,7 @@ export default function CategoryForm({ categoryId }: { categoryId?: string }) {
             pinterest_link: cData.pinterest_link || "",
           })
           setQrNote(cData.qr_note || "")
+          setQrColor(cData.qr_color || "#1e1e2f")
           setViews(cData.views || 0)
         }
         
@@ -92,6 +94,7 @@ export default function CategoryForm({ categoryId }: { categoryId?: string }) {
       id: activeId,
       ...formData,
       qr_note: qrNote,
+      qr_color: qrColor,
       price: formData.price ? parseFloat(formData.price) : null,
       discount_price: formData.discount_price ? parseFloat(formData.discount_price) : null,
     }
@@ -377,12 +380,53 @@ export default function CategoryForm({ categoryId }: { categoryId?: string }) {
                   />
                 </div>
                 
-                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-0.5 rounded-3xl shadow-lg mb-4 relative overflow-hidden group">
+                <div className="w-full mb-4">
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 text-left">QR Branding Color</label>
+                  <div className="flex gap-1.5 mb-3 flex-wrap">
+                    {[
+                      { name: 'Classic', color: '#1e1e2f' },
+                      { name: 'Indigo', color: '#4f46e5' },
+                      { name: 'Royal', color: '#2563eb' },
+                      { name: 'Sky', color: '#0ea5e9' },
+                      { name: 'Cyan', color: '#06b6d4' },
+                      { name: 'Teal', color: '#14b8a6' },
+                      { name: 'Forest', color: '#059669' },
+                      { name: 'Grass', color: '#10b981' },
+                      { name: 'Lime', color: '#84cc16' },
+                      { name: 'Gold', color: '#eab308' },
+                      { name: 'Amber', color: '#f59e0b' },
+                      { name: 'Orange', color: '#ea580c' },
+                      { name: 'Red', color: '#ef4444' },
+                      { name: 'Rose', color: '#e11d48' },
+                      { name: 'Pink', color: '#ec4899' },
+                      { name: 'Fuchsia', color: '#d946ef' },
+                      { name: 'Purple', color: '#9333ea' },
+                      { name: 'Violet', color: '#7c3aed' },
+                    ].map((style) => (
+                      <button
+                        key={style.color}
+                        type="button"
+                        onClick={() => setQrColor(style.color)}
+                        className={`w-6 h-6 rounded-full border-2 transition-all ${qrColor === style.color ? 'border-gray-900 scale-125' : 'border-transparent shadow-sm'}`}
+                        style={{ backgroundColor: style.color }}
+                        title={style.name}
+                      />
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="bg-white p-0.5 rounded-3xl shadow-lg border-2 border-black mb-4 relative overflow-hidden group">
                   <div className="bg-white p-4 rounded-[22px] transition-transform group-hover:scale-[1.02]">
-                    <div className="mb-2 text-[10px] font-bold text-gray-400 uppercase tracking-tight truncate max-w-[160px]">
+                    <div className="mb-2 text-[10px] font-bold text-black uppercase tracking-tight truncate max-w-[160px]">
                        {qrNote || "Scan Me"}
                     </div>
-                    <QRCodeSVG id="qr-code-section" value={categoryUrl} size={160} level="H" fgColor="#1e1e2f" />
+                    <QRCodeSVG 
+                      id="qr-code-section" 
+                      value={categoryUrl} 
+                      size={160} 
+                      level="H" 
+                      fgColor={qrColor}
+                    />
                   </div>
                 </div>
                 <h3 className="font-bold text-gray-900 mb-1">Section QR Code</h3>
