@@ -1,26 +1,185 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-border: #e5e7eb;
+  --color-input: #e5e7eb;
+  --color-ring: #0f172a;
+  --color-background: #ffffff;
+  --color-foreground: #0f172a;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ========== Celebration Animations for QR Scan Page ========== */
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes priceGlow {
+  0%, 100% { text-shadow: 0 0 8px rgba(99, 102, 241, 0); }
+  50% { text-shadow: 0 0 20px rgba(99, 102, 241, 0.4); }
+}
+
+@keyframes salePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes confettiFall {
+  0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.05); }
+  70% { transform: scale(0.95); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes bottomSlideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Utility animation classes */
+.anim-fade-up {
+  animation: fadeInUp 0.6s ease-out both;
+}
+
+.anim-fade-up-delay-1 {
+  animation: fadeInUp 0.6s ease-out 0.15s both;
+}
+
+.anim-fade-up-delay-2 {
+  animation: fadeInUp 0.6s ease-out 0.3s both;
+}
+
+.anim-fade-up-delay-3 {
+  animation: fadeInUp 0.7s ease-out 0.45s both;
+}
+
+.anim-scale-in {
+  animation: fadeInScale 0.5s ease-out both;
+}
+
+.anim-scale-in-delay {
+  animation: fadeInScale 0.5s ease-out 0.2s both;
+}
+
+.anim-slide-left {
+  animation: slideInLeft 0.5s ease-out 0.1s both;
+}
+
+.anim-slide-right {
+  animation: slideInRight 0.5s ease-out 0.1s both;
+}
+
+.anim-price-glow {
+  animation: priceGlow 2s ease-in-out infinite;
+}
+
+.anim-sale-pulse {
+  animation: salePulse 1.5s ease-in-out infinite;
+}
+
+.anim-shimmer {
+  background: linear-gradient(90deg, transparent 30%, rgba(255,255,255,0.5) 50%, transparent 70%);
+  background-size: 200% 100%;
+  animation: shimmer 2.5s linear infinite;
+}
+
+.anim-bounce-in {
+  animation: bounceIn 0.8s ease-out both;
+}
+
+.anim-bottom-slide {
+  animation: bottomSlideUp 0.5s ease-out 0.6s both;
+}
+
+/* Confetti particle base */
+.confetti-particle {
+  position: fixed;
+  top: -10px;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  z-index: 9999;
+  pointer-events: none;
+  animation: confettiFall 2.5s ease-in forwards;
+}
+
+/* Media card stagger */
+.media-card-enter {
+  animation: fadeInUp 0.5s ease-out both;
+}
+
+/* Lightbox */
+@keyframes lightboxFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes lightboxImageIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shareSheetUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.lightbox-enter {
+  animation: lightboxFadeIn 0.25s ease-out both;
+}
+
+.lightbox-image-enter {
+  animation: lightboxImageIn 0.3s ease-out both;
+}
+
+.share-sheet-enter {
+  animation: shareSheetUp 0.35s ease-out both;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  50% { transform: translateX(8px); }
+  75% { transform: translateX(-8px); }
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
 }
