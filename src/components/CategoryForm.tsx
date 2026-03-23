@@ -66,6 +66,7 @@ export default function CategoryForm({ categoryId }: { categoryId?: string }) {
             instagram_link: cData.instagram_link || "",
             pinterest_link: cData.pinterest_link || "",
           })
+          setQrNote(cData.qr_note || "")
           setViews(cData.views || 0)
         }
         
@@ -90,6 +91,7 @@ export default function CategoryForm({ categoryId }: { categoryId?: string }) {
     const payload = {
       id: activeId,
       ...formData,
+      qr_note: qrNote,
       price: formData.price ? parseFloat(formData.price) : null,
       discount_price: formData.discount_price ? parseFloat(formData.discount_price) : null,
     }
