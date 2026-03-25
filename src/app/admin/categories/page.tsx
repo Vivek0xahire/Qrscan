@@ -8,6 +8,7 @@ import Link from "next/link"
 import { QRCodeSVG } from "qrcode.react"
 import JSZip from "jszip"
 import { saveAs } from "file-saver"
+import jsPDF from "jspdf"
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -103,11 +104,26 @@ export default function CategoriesPage() {
     }
 
     const generatedItems = []
+    const pvcFolder = zip.folder("PVC_Cards_PDF")
+    
     for (let i = 0; i < categories.length; i++) {
         const cat = categories[i]
         const data = await generateQRCanvas(cat)
         folder?.file(`${cat.name.replace(/[^a-z0-9]/gi, '_')}.png`, data.blob)
         generatedItems.push(data.canvas)
+        
+        // PVC Card PDF Generation (CR80 Standard size: 54mm x 86mm)
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [54, 86] })
+        const imgData = data.canvas.toDataURL("image/png", 1.0)
+        const pdfScale = Math.min(50 / data.canvas.width, 82 / data.canvas.height) // 2mm margin
+        const drawW = data.canvas.width * pdfScale
+        const drawH = data.canvas.height * pdfScale
+        const dx = (54 - drawW) / 2
+        const dy = (86 - drawH) / 2
+        
+        pdf.addImage(imgData, 'PNG', dx, dy, drawW, drawH)
+        pvcFolder?.file(`${cat.name.replace(/[^a-z0-9]/gi, '_')}_PVC.pdf`, pdf.output('blob'))
+        
         setBatchProgress(Math.round(((i + 1) / categories.length) * 50))
     }
 
