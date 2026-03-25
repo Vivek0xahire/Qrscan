@@ -107,6 +107,12 @@ function Lightbox({ items, startIndex, onClose }: { items: CategoryMedia[], star
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
+        {item.price && (
+          <div className="absolute top-4 left-4 z-[60] bg-black/70 backdrop-blur-md px-4 py-2 rounded-2xl shadow-2xl border border-white/20 flex items-center gap-1 pointer-events-none">
+            <span className="text-lg font-extrabold text-white tracking-widest">₹{item.price}</span>
+          </div>
+        )}
+
         {/* Left arrow */}
         {currentIndex > 0 && (
           <button onClick={goPrev} className="absolute left-2 z-10 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors">
@@ -458,10 +464,17 @@ export default function SectionView({ params }: { params: Promise<{ id: string }
                         </div>
                       </div>
                       {/* Image counter badge */}
-                      <span className="absolute bottom-2 right-2 bg-black/50 backdrop-blur-sm text-white text-[11px] font-bold px-2.5 py-1 rounded-full">
-                        {idx + 1} / {mediaItems.length}
-                      </span>
+                       <span className="absolute bottom-2 right-2 bg-black/50 backdrop-blur-sm text-white text-[11px] font-bold px-2.5 py-1 rounded-full pointer-events-none">
+                         {idx + 1} / {mediaItems.length}
+                       </span>
                     </>
+                 )}
+                 
+                 {/* Individual Item Price Tag */}
+                 {item.price && (
+                   <div className="absolute top-3 left-3 z-30 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-xl border border-white/10 flex items-center gap-1 pointer-events-none">
+                     <span className="text-sm font-extrabold text-white tracking-widest">₹{item.price}</span>
+                   </div>
                  )}
                </div>
              ))}

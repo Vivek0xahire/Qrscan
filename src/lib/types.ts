@@ -16,5 +16,6 @@ export interface CategoryMedia {
   category_id: string
   url: string
   media_type: 'image' | 'video'
+  price?: number | null
   created_at: string
 }

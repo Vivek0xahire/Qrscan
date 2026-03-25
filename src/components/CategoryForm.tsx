@@ -27,8 +27,8 @@ export default function CategoryForm({ categoryId }: { categoryId?: string }) {
   const [mediaItems, setMediaItems] = useState<CategoryMedia[]>([])
   
   // Newly added media that haven't been saved to DB yet
-  const [pendingFiles, setPendingFiles] = useState<{ id: string, file: File, type: string, localUrl: string }[]>([])
-  const [pendingLinks, setPendingLinks] = useState<{ id: string, url: string, type: string }[]>([])
+  const [pendingFiles, setPendingFiles] = useState<{ id: string, file: File, type: string, localUrl: string, price?: string }[]>([])
+  const [pendingLinks, setPendingLinks] = useState<{ id: string, url: string, type: string, price?: string }[]>([])
 
   const [formData, setFormData] = useState({
     name: "",
@@ -44,6 +44,7 @@ export default function CategoryForm({ categoryId }: { categoryId?: string }) {
   // State for direct link addition
   const [directLinkUrl, setDirectLinkUrl] = useState("")
   const [directLinkType, setDirectLinkType] = useState<"image" | "video">("image")
+  const [directLinkPrice, setDirectLinkPrice] = useState("")
   
   // QR Styling state
   const [qrNote, setQrNote] = useState("cotton dekhne ke liye muje scan karo.")
@@ -130,7 +131,8 @@ export default function CategoryForm({ categoryId }: { categoryId?: string }) {
           const { error: insertError } = await supabase.from("category_media").insert([{
             category_id: activeId,
             url: publicURLData.publicUrl,
-            media_type: pFile.type
+            media_type: pFile.type,
+            price: pFile.price ? parseFloat(pFile.price) : null
           }]);
           if (insertError) {
              alert(`Failed to save image info to database: ${insertError.message}`);
@@ -146,7 +148,8 @@ export default function CategoryForm({ categoryId }: { categoryId?: string }) {
        const { error: linkErr } = await supabase.from("category_media").insert([{
          category_id: activeId,
          url: pLink.url,
-         media_type: pLink.type
+         media_type: pLink.type,
+         price: pLink.price ? parseFloat(pLink.price) : null
        }]);
        if (linkErr) {
           alert(`Failed to save direct link: ${linkErr.message}`);
@@ -173,7 +176,8 @@ export default function CategoryForm({ categoryId }: { categoryId?: string }) {
             id: Math.random().toString(),
             file,
             type: isVideo ? 'video' : 'image',
-            localUrl: URL.createObjectURL(file)
+            localUrl: URL.createObjectURL(file),
+            price: ""
         })
     }
     setPendingFiles([...pendingFiles, ...newPendingFiles])
@@ -181,8 +185,9 @@ export default function CategoryForm({ categoryId }: { categoryId?: string }) {
 
   const handleAddDirectLink = async () => {
     if (!directLinkUrl) return
-    setPendingLinks([...pendingLinks, { id: Math.random().toString(), url: directLinkUrl, type: directLinkType }])
+    setPendingLinks([...pendingLinks, { id: Math.random().toString(), url: directLinkUrl, type: directLinkType, price: directLinkPrice }])
     setDirectLinkUrl("")
+    setDirectLinkPrice("")
   }
 
   const handleRemoveMedia = async (id: string, url: string, isLocal?: string) => {
@@ -199,6 +204,14 @@ export default function CategoryForm({ categoryId }: { categoryId?: string }) {
     
     await supabase.from("category_media").delete().eq("id", id)
     setMediaItems(mediaItems.filter(i => i.id !== id))
+  }
+
+  const handleUpdateMediaPrice = async (id: string, newPrice: string) => {
+    const val = newPrice ? parseFloat(newPrice) : null;
+    const { error } = await supabase.from("category_media").update({ price: val }).eq("id", id);
+    if (error) {
+      alert("Failed to update price: " + error.message);
+    }
   }
 
   const downloadQR = () => {
@@ -482,13 +495,20 @@ export default function CategoryForm({ categoryId }: { categoryId?: string }) {
                {/* Add via direct link */}
                <div className="flex gap-2 flex-col sm:flex-row mb-6">
                  <div className="flex flex-col gap-2 flex-2">
-                   <select 
-                     value={directLinkType} onChange={(e) => setDirectLinkType(e.target.value as any)}
-                     className="bg-gray-50 border border-gray-200 rounded-lg p-2 text-sm outline-none"
-                   >
-                     <option value="image">Image URL</option>
-                     <option value="video">Video URL</option>
-                   </select>
+                   <div className="flex gap-2">
+                     <select 
+                       value={directLinkType} onChange={(e) => setDirectLinkType(e.target.value as any)}
+                       className="bg-gray-50 border border-gray-200 rounded-lg p-2 text-sm outline-none flex-1"
+                     >
+                       <option value="image">Image URL</option>
+                       <option value="video">Video URL</option>
+                     </select>
+                     <input 
+                       name="directLinkPrice" type="number" value={directLinkPrice} onChange={(e) => setDirectLinkPrice(e.target.value)}
+                       placeholder="Price (Opt)"
+                       className="bg-gray-50 border border-gray-200 rounded-lg p-2 text-sm outline-none w-[100px]"
+                     />
+                   </div>
                    <input 
                      value={directLinkUrl} onChange={(e) => setDirectLinkUrl(e.target.value)}
                      placeholder="https://..."
@@ -532,11 +552,25 @@ export default function CategoryForm({ categoryId }: { categoryId?: string }) {
                            <Trash2 className="w-4 h-4" />
                          </button>
                        </div>
-                       
-                       <span className="absolute top-1.5 left-1.5 bg-black/60 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full backdrop-blur-md">
-                         {item.media_type}
-                       </span>
-                     </div>
+                                              <span className="absolute top-1.5 left-1.5 bg-black/60 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full backdrop-blur-md">
+                          {item.media_type}
+                        </span>
+                        
+                        <div className="absolute bottom-0 left-0 right-0 p-1 bg-black/60 backdrop-blur-sm border-t border-gray-800 flex items-center">
+                          <span className="text-gray-400 text-[10px] sm:text-xs font-bold pl-2 mr-1">₹</span>
+                          <input 
+                            type="number" 
+                            value={item.price || ""} 
+                            onChange={(e) => {
+                              const val = e.target.value ? parseFloat(e.target.value) : null;
+                              setMediaItems(mediaItems.map(f => f.id === item.id ? { ...f, price: val } : f));
+                            }}
+                            onBlur={(e) => handleUpdateMediaPrice(item.id, e.target.value)}
+                            placeholder="Price" 
+                            className="w-full bg-transparent border-none outline-none text-xs sm:text-sm font-bold text-white placeholder:text-gray-500 p-0.5"
+                          />
+                        </div>
+                      </div>
                    ))}
 
                    {/* Render Pending Files */}
@@ -557,11 +591,24 @@ export default function CategoryForm({ categoryId }: { categoryId?: string }) {
                            <Trash2 className="w-4 h-4" />
                          </button>
                        </div>
-                       
-                       <span className="absolute top-1.5 left-1.5 bg-indigo-500 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full backdrop-blur-md shadow-sm">
-                         New {item.type}
-                       </span>
-                     </div>
+                                              <span className="absolute top-1.5 left-1.5 bg-indigo-500 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full backdrop-blur-md shadow-sm">
+                          New {item.type}
+                        </span>
+
+                        <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-white/95 backdrop-blur-md border-t border-indigo-100 flex items-center">
+                          <span className="text-gray-500 text-[10px] sm:text-xs font-bold pl-1 mr-1">₹</span>
+                          <input 
+                            type="number" 
+                            value={item.price || ""} 
+                            onChange={(e) => {
+                              const newArray = pendingFiles.map(f => f.id === item.id ? { ...f, price: e.target.value } : f);
+                              setPendingFiles(newArray);
+                            }} 
+                            placeholder="Price" 
+                            className="w-full bg-transparent border-none outline-none text-xs sm:text-sm font-bold placeholder:text-gray-400 p-0 text-gray-900"
+                          />
+                        </div>
+                      </div>
                    ))}
 
                    {/* Render Pending Links */}
@@ -586,11 +633,24 @@ export default function CategoryForm({ categoryId }: { categoryId?: string }) {
                            <Trash2 className="w-4 h-4" />
                          </button>
                        </div>
-                       
-                       <span className="absolute top-1.5 left-1.5 bg-purple-500 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full backdrop-blur-md shadow-sm">
-                         New Link
-                       </span>
-                     </div>
+                                              <span className="absolute top-1.5 left-1.5 bg-purple-500 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full backdrop-blur-md shadow-sm">
+                          New Link
+                        </span>
+
+                        <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-white/95 backdrop-blur-md border-t border-purple-100 flex items-center">
+                          <span className="text-gray-500 text-[10px] sm:text-xs font-bold pl-1 mr-1">₹</span>
+                          <input 
+                            type="number" 
+                            value={item.price || ""} 
+                            onChange={(e) => {
+                              const newArray = pendingLinks.map(f => f.id === item.id ? { ...f, price: e.target.value } : f);
+                              setPendingLinks(newArray);
+                            }} 
+                            placeholder="Price" 
+                            className="w-full bg-transparent border-none outline-none text-xs sm:text-sm font-bold placeholder:text-gray-400 p-0 text-gray-900"
+                          />
+                        </div>
+                      </div>
                    ))}
 
                  </div>

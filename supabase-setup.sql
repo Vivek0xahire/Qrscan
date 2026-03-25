@@ -17,6 +17,9 @@ CREATE TABLE categories (
   discount_price DECIMAL(10, 2),
   instagram_link TEXT,
   pinterest_link TEXT,
+  qr_note TEXT,
+  qr_color VARCHAR(50) DEFAULT '#1e1e2f',
+  views INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now())
 );
 
@@ -26,6 +29,7 @@ CREATE TABLE category_media (
   category_id UUID REFERENCES categories(id) ON DELETE CASCADE,
   url TEXT NOT NULL,
   media_type VARCHAR(50) NOT NULL DEFAULT 'image', -- 'image' or 'video'
+  price DECIMAL(10, 2),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now())
 );
 
