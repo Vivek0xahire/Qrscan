@@ -222,7 +222,7 @@ export default function CategoryForm({ categoryId }: { categoryId?: string }) {
         const ctx = canvas.getContext("2d");
         const img = new Image();
         
-        const scale = 3; // Even higher resolution for ultra-sharp prints
+        const scale = 12; // Ultra High Resolution (600 DPI quality)
 
         img.onload = () => {
             const qrSize = img.width * scale;
@@ -275,6 +275,11 @@ export default function CategoryForm({ categoryId }: { categoryId?: string }) {
                     });
                 }
                 
+                // Draw black border
+                ctx.strokeStyle = "black";
+                ctx.lineWidth = 8;
+                ctx.strokeRect(0, 0, canvas.width, canvas.height);
+
                 // Draw QR Code below text
                 ctx.drawImage(img, padding, padding + textSpace, qrSize, qrSize);
                 

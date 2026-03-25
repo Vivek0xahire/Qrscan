@@ -55,14 +55,14 @@ export default function CategoriesPage() {
         return lines;
     };
 
-    const generateQRBlob = (cat: Category): Promise<Blob> => {
+    const generateQRCanvas = (cat: Category): Promise<{ blob: Blob, canvas: HTMLCanvasElement }> => {
         return new Promise((resolve) => {
             const svg = document.getElementById(`batch-qr-${cat.id}`) as any
             const svgData = new XMLSerializer().serializeToString(svg)
             const canvas = document.createElement("canvas")
             const ctx = canvas.getContext("2d")
             const img = new Image()
-            const scale = 3
+            const scale = 12 // Super high resolution for ultra-sharp prints
             
             img.onload = () => {
                 const qrSize = img.width * scale
@@ -88,20 +88,99 @@ export default function CategoriesPage() {
                     ctx.textBaseline = "top"
                     
                     lines.forEach((line, i) => ctx.fillText(line, canvas.width / 2, padding + (i * lineHeight)))
+                    
+                    ctx.strokeStyle = "black"
+                    ctx.lineWidth = 8
+                    ctx.strokeRect(0, 0, canvas.width, canvas.height)
+                    
                     ctx.drawImage(img, padding, padding + textSpace, qrSize, qrSize)
                     
-                    canvas.toBlob((blob) => resolve(blob!), "image/png", 1.0)
+                    canvas.toBlob((blob) => resolve({ blob: blob!, canvas }), "image/png", 1.0)
                 }
             }
             img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgData)
         })
     }
 
+    const generatedItems = []
     for (let i = 0; i < categories.length; i++) {
         const cat = categories[i]
-        const blob = await generateQRBlob(cat)
-        folder?.file(`${cat.name.replace(/[^a-z0-9]/gi, '_')}.png`, blob)
-        setBatchProgress(Math.round(((i + 1) / categories.length) * 100))
+        const data = await generateQRCanvas(cat)
+        folder?.file(`${cat.name.replace(/[^a-z0-9]/gi, '_')}.png`, data.blob)
+        generatedItems.push(data.canvas)
+        setBatchProgress(Math.round(((i + 1) / categories.length) * 50))
+    }
+
+    // Create Print Pages (600 DPI for Extreme Clarity)
+    const A4_WIDTH = 7016 // 600 DPI Landscape A4
+    const A4_HEIGHT = 4960
+    const columns = 4
+    const rows = 2
+    const itemsPerPage = columns * rows
+    const pages = Math.ceil(generatedItems.length / itemsPerPage)
+    
+    const printFolder = zip.folder("Print_Ready_Pages")
+    
+    for (let p = 0; p < pages; p++) {
+        const pageCanvas = document.createElement("canvas")
+        pageCanvas.width = A4_WIDTH
+        pageCanvas.height = A4_HEIGHT
+        const pCtx = pageCanvas.getContext("2d")
+        if (!pCtx) continue
+        
+        // white bg
+        pCtx.fillStyle = "white"
+        pCtx.fillRect(0, 0, A4_WIDTH, A4_HEIGHT)
+        
+        // Setup dotted lines for cutting
+        pCtx.strokeStyle = "#999"
+        pCtx.lineWidth = 6
+        pCtx.setLineDash([30, 20])
+        
+        const cellWidth = A4_WIDTH / columns
+        const cellHeight = A4_HEIGHT / rows
+        
+        // Draw grid lines
+        for (let c = 1; c < columns; c++) {
+            pCtx.beginPath()
+            pCtx.moveTo(c * cellWidth, 0)
+            pCtx.lineTo(c * cellWidth, A4_HEIGHT)
+            pCtx.stroke()
+        }
+        for (let r = 1; r < rows; r++) {
+            pCtx.beginPath()
+            pCtx.moveTo(0, r * cellHeight)
+            pCtx.lineTo(A4_WIDTH, r * cellHeight)
+            pCtx.stroke()
+        }
+        
+        pCtx.setLineDash([]) // reset
+        
+        // Draw QRs inside grid
+        for (let i = 0; i < itemsPerPage; i++) {
+            const index = p * itemsPerPage + i
+            if (index >= generatedItems.length) break
+            
+            const qrCanvas = generatedItems[index]
+            const r = Math.floor(i / columns)
+            const c = i % columns
+            
+            const margin = 20 // minimal margin for maximum size
+            const availW = cellWidth - margin * 2
+            const availH = cellHeight - margin * 2
+            const scale = Math.min(availW / qrCanvas.width, availH / qrCanvas.height)
+            
+            const drawW = qrCanvas.width * scale
+            const drawH = qrCanvas.height * scale
+            const dx = c * cellWidth + (cellWidth - drawW) / 2
+            const dy = r * cellHeight + (cellHeight - drawH) / 2
+            
+            pCtx.drawImage(qrCanvas, dx, dy, drawW, drawH)
+        }
+        
+        const blob = await new Promise<Blob>((res) => pageCanvas.toBlob((b) => res(b!), "image/png", 1.0))
+        printFolder?.file(`Print_Page_${p + 1}.png`, blob)
+        setBatchProgress(50 + Math.round(((p + 1) / pages) * 50))
     }
 
     const content = await zip.generateAsync({ type: "blob" })
@@ -154,6 +233,7 @@ export default function CategoriesPage() {
             value={`${window.location.origin}/category/${cat.id}`} 
             size={256} 
             level="H" 
+            fgColor={cat.qr_color || "#1e1e2f"}
           />
         ))}
       </div>

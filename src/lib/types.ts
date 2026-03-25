@@ -8,6 +8,7 @@ export interface Category {
   pinterest_link: string | null
   views: number | null
   qr_note: string | null
+  qr_color: string | null
   created_at: string
 }
 
